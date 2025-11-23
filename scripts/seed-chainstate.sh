@@ -13,7 +13,13 @@ if [ ! -f "${ENV_FILE}" ];then
 	cp -a "${SCRIPTPATH}/sample.env" "${ENV_FILE}"
 fi
 source "${ENV_FILE}"
-export CURRENT_USER=$(who am i | awk '{print $1}')
+
+CURRENT_USER=$(who am i | awk '{print $1}')
+# some ttys don't return the expected value here (looking at you, tmux)
+if [ ! -n "${CURRENT_USER}" ];then
+  CURRENT_USER=$(whoami | awk '{print $1}')
+fi
+export $CURRENT_USER
 
 COLRED=$'\033[31m' # Red
 COLGREEN=$'\033[32m' # Green
