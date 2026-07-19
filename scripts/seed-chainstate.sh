@@ -106,13 +106,18 @@ download_file(){
     fi
 
     # Download the file
-    local http_code=$(curl --output /dev/null --silent --head -w "%{http_code}" ${url})
+    local http_code=$(curl -L --output /dev/null --silent --head -w "%{http_code}" ${url})
     log "Downloading ${url} data to: ${dest}"
+    # NOTE: archive.hiro.so redirects downloads to pre-signed Cloudflare R2 URLs.
+    # HEAD requests can return 403/3xx even when the file exists, so a non-200
+    # response is logged as a warning instead of aborting. The actual download
+    # below will fail loudly if the URL is truly invalid.
     if [[ "${http_code}" && "${http_code}" != "200" ]];then
-        exit_error "${COLRED}Error${COLRESET} - ${url} doesn't exist"
+        log "  WARN: HEAD returned ${http_code}, continuing anyway"
     fi
     local size=$( curl -s -L -I ${url} | awk -v IGNORECASE=1 '/^content-length/ { print $2 }' | sed 's/\r$//' )
-    local converted_size=$(numfmt --to iec --format "%8.4f" ${size})
+    # Default to 0 if Content-Length is unavailable (e.g. HEAD blocked) so numfmt doesn't error
+    local converted_size=$(numfmt --to iec --format "%8.4f" ${size:-0})
     log "  File Download size: ${converted_size}"
     log "  Retrieving: ${url}"
     if [[ "${use_aria2}" == true ]]; then
