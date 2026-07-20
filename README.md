@@ -6,6 +6,7 @@
 Run your own Stacks Blockchain node easily with just few commands.
 
 ⚠️ **[docker compose version `2.2.2` or greater is required](./docs/docker.md)**
+⚠️ **On Ubuntu, you may need to run Docker commands with `sudo` unless your user is in the `docker` group**
 
 ---
 
@@ -34,13 +35,30 @@ Using data from the [Hiro Archiver](https://docs.hiro.so/hiro-archive) service, 
 _**Note**: it can take a long time to process the data, and you'll need at a minimum roughly **1.5TB** of free space to download and process the chainstate archives_\
 _**Note**: for faster downloads, install [aria2](https://aria2.github.io/) on your system_
 
-Example aria2c install on a debian based system:
-```
-git clone https://github.com/aria2/aria2 aria2c && cd aria2c
-sudo apt-get install -y build-essential libssh2-1-dev libc-ares-dev libxml2-dev zlib1g-dev libsqlite3-dev sqlite3 pkg-config autopoint binutils autoconf automake autotools-dev libtool
-autoreconf -i
-./configure
-make && sudo make install
+Example aria2c install on a debian/ubuntu based system:
+```bash
+# 1. Install build dependencies
+sudo apt-get update
+sudo apt-get install -y build-essential autoconf automake autotools-dev autopoint \
+  libtool pkg-config gettext libssl-dev libc-ares-dev libxml2-dev \
+  zlib1g-dev libsqlite3-dev libssh2-1-dev
+
+# 2. Clone the source
+git clone https://github.com/aria2/aria2
+cd aria2
+
+autopoint --force
+autoreconf -fi
+
+# 3. Configure without translations (avoids the po/ gettext build entirely)
+./configure --disable-nls --with-openssl
+
+# 4. Build and install
+make -j$(nproc)
+sudo make install
+
+# 5. Verify
+aria2c --version
 ```
 
 ```bash
